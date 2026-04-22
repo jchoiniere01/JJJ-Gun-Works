@@ -119,5 +119,20 @@ original SQL Server / pyodbc project. Original sources are preserved under
   calls it on a schedule. Wire a Render cron job to hit that endpoint every
   few minutes.
 - **Connection-pool sizing.** `min_size=1, max_size=5` matches Render's
-  Starter Postgres connection limit. Bump these in `app/db.py` if you scale
-  up the database plan.
+  Free / small Postgres connection limit. Bump these in `app/db.py` if you
+  scale up the database plan.
+- **Render Postgres database plan.** `render.yaml` uses `plan: free` for the
+  database. Render's legacy Postgres plans (such as `starter`) are no longer
+  valid for new databases — pick `free` for dev or a current paid tier
+  (e.g. `basic-256mb`, `basic-1gb`, `pro-*`) for production.
+- **Python runtime pinned to 3.12.8.** Render was otherwise defaulting to
+  Python 3.14, for which `pydantic-core` ships no manylinux wheel. pip then
+  tried to build `pydantic-core` from source with `maturin`/`cargo`, which
+  fails on Render's read-only cargo registry. The pin is applied via
+  `render.yaml` (`PYTHON_VERSION=3.12.8`), `.python-version`, and
+  `runtime.txt`. `requirements.txt` also pins `pydantic-core==2.27.2` (has
+  a cp312 manylinux wheel) and `pyproject.toml` narrows to
+  `requires-python = ">=3.11,<3.13"`. Build command switched to
+  `pip install --only-binary=:all: -r requirements.txt` so any future
+  wheel-less resolution fails fast instead of invoking cargo.
+  See `BUILD_FIX_PYTHON_VERSION.md`.

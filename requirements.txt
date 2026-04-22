@@ -1,8 +1,17 @@
+# Pinned to versions that ship prebuilt manylinux wheels for CPython 3.12 on
+# Linux x86_64. Do NOT upgrade without verifying wheels exist on PyPI —
+# Render's build environment has a read-only cargo registry, so any fallback
+# to a source build of pydantic-core (via maturin/cargo) will fail.
+#
+# Python runtime is pinned to 3.12.8 via .python-version and render.yaml's
+# PYTHON_VERSION env var. See BUILD_FIX_PYTHON_VERSION.md.
+
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 psycopg[binary]==3.2.3
 psycopg-pool==3.2.3
 pydantic==2.10.5
+pydantic-core==2.27.2
 pydantic-settings==2.7.1
 email-validator==2.2.0
 python-dotenv==1.0.1

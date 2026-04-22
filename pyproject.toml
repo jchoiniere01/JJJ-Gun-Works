@@ -2,7 +2,7 @@
 name = "firearms-fastapi-backend"
 version = "1.0.0"
 description = "FastAPI backend for firearms inventory and AR configurator on Render managed PostgreSQL (psycopg 3)."
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13"
 
 [tool.ruff]
 line-length = 120

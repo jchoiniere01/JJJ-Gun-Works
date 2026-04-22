@@ -20,8 +20,8 @@ _pool: ConnectionPool | None = None
 def _get_pool() -> ConnectionPool:
     """Lazy-construct a process-wide psycopg connection pool.
 
-    Render Starter Postgres instances have low connection limits, so the
-    pool is intentionally small. Bump ``max_size`` for larger plans.
+    Render Free / small Postgres instances have low connection limits, so
+    the pool is intentionally small. Bump ``max_size`` for larger plans.
     """
 
     global _pool

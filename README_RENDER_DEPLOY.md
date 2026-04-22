@@ -9,6 +9,21 @@ instance and a Python web service running FastAPI/uvicorn.
 - `psql` available locally (or use Render's "Connect" shell) to run migrations
 - The source for this package (zip or git repo)
 
+### Python version
+
+This package pins **Python 3.12.8** via three mechanisms so Render never
+defaults to the latest interpreter:
+
+- `render.yaml` sets `PYTHON_VERSION=3.12.8` in the web service `envVars`
+- `.python-version` at the repo root (`3.12.8`)
+- `runtime.txt` at the repo root (`python-3.12.8`)
+
+Do not remove any of these without verifying that every pinned dependency
+ships a prebuilt manylinux wheel for the new interpreter. See
+`BUILD_FIX_PYTHON_VERSION.md` for why — a Python 3.14 default would force
+`pydantic-core` to build from source via `maturin`/`cargo`, which fails on
+Render's read-only cargo registry.
+
 ## 2. Upload / connect the repo
 
 Option A — Git (recommended):
@@ -21,10 +36,15 @@ Option A — Git (recommended):
 Option B — Manual:
 
 1. Create **New → PostgreSQL** using the settings in `render.yaml`
-   (database name `firearms_inventory`, user `firearms_app`, plan `starter`).
+   (database name `firearms_inventory`, user `firearms_app`, plan `free`).
+   Note: Render's legacy Postgres plans such as `starter` are no longer
+   valid for new databases — use `free` (or a current paid tier like
+   `basic-256mb` / `basic-1gb` for production).
 2. Create **New → Web Service** pointing at the repo, with:
-   - Build command: `pip install -r requirements.txt`
+   - Build command: `pip install --only-binary=:all: -r requirements.txt`
    - Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - Environment variable `PYTHON_VERSION=3.12.8` (also confirm the service
+     shows "Python 3.12.8" in the Settings → Environment section).
 3. On the web service, add an environment variable `DATABASE_URL` whose value
    is the managed Postgres **Internal Database URL** (already includes
    `?sslmode=require`).
@@ -126,9 +146,16 @@ curl -X POST "https://<service>.onrender.com/api/reservations/release" \
 - **`409 Conflict` on every reservation** — inventory is seeded with zero
   quantities or the guarded UPDATE's `is_active = TRUE` + availability check
   is failing. Inspect `public.inventory_items` directly.
-- **Low connection limit on Starter plan** — the app uses a small pool
+- **Low connection limit on Free / small plans** — the app uses a small pool
   (`min_size=1`, `max_size=5`). Bump in `app/db.py` when you upgrade the
   Postgres plan.
+- **Build fails with `maturin failed` / `error: could not write to /usr/local/cargo/registry`** —
+  Render picked a Python version (e.g. 3.14) that has no `pydantic-core`
+  wheel, so pip tried to compile Rust from source. Confirm
+  `PYTHON_VERSION=3.12.8` is set in the web service env, `.python-version`
+  and `runtime.txt` are present at the repo root, and the build command is
+  `pip install --only-binary=:all: -r requirements.txt`. See
+  `BUILD_FIX_PYTHON_VERSION.md`.
 
 ## 8. Post-deploy hardening (optional)
 
