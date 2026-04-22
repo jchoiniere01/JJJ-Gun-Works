@@ -1,0 +1,39 @@
+# =============================================================================
+# JJJ Gun Works LLC — Local PostgreSQL for parity with Render managed PG.
+#
+# Replaces docker-compose.sqlserver.yml. Starts Postgres 16 on localhost:5432
+# with a named volume so data survives container restarts. The connection
+# values below are DEV DEFAULTS — change them (and never commit real creds).
+#
+#   docker compose -f docker-compose.postgres.yml up -d
+#   docker compose -f docker-compose.postgres.yml exec postgres psql -U firearms_app -d firearms_inventory
+# =============================================================================
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: jjj-firearms-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: firearms_app
+      POSTGRES_PASSWORD: dev_password_change_me
+      POSTGRES_DB: firearms_inventory
+      # Match Render's default timezone behavior; app columns are TIMESTAMPTZ.
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      # Optional: auto-run migrations on a FRESH volume. Uncomment if desired.
+      # - ./sql/001_inventory_reservations.postgres.sql:/docker-entrypoint-initdb.d/001.sql:ro
+      # - ./sql/002_reservation_functions.postgres.sql:/docker-entrypoint-initdb.d/002.sql:ro
+      # - ./sql/003_seed_configurator_options.postgres.sql:/docker-entrypoint-initdb.d/003.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U firearms_app -d firearms_inventory"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pg_data:

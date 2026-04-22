@@ -1,0 +1,11 @@
+[project]
+name = "firearms-fastapi-backend"
+version = "1.0.0"
+description = "FastAPI backend for firearms inventory and AR configurator with SQL Server pyodbc."
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 120
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

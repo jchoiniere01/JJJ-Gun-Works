@@ -1,0 +1,151 @@
+JJJ Gun Works LLC — SQL Server → PostgreSQL table/column mapping
+================================================================
+
+Schema: dbo  →  public
+Casing: PascalCase/UPPERCASE  →  snake_case
+Booleans: BIT (1/0)  →  BOOLEAN (TRUE/FALSE)
+Timestamps: DATETIME2(3) NOT NULL DEFAULT SYSUTCDATETIME()  →  TIMESTAMPTZ NOT NULL DEFAULT now()
+Strings:  NVARCHAR(n)  →  VARCHAR(n)
+          NVARCHAR(MAX)  →  TEXT
+Money:    DECIMAL(19,4)  →  NUMERIC(19,4)
+Identity: INT IDENTITY(1,1)  →  INT GENERATED ALWAYS AS IDENTITY
+
+----------------------------------------------------------------
+Table: dbo.PartCategories  →  public.part_categories
+----------------------------------------------------------------
+CategoryID           INT IDENTITY PK          →  category_id           INT GENERATED ALWAYS AS IDENTITY PK
+Name                 NVARCHAR(150) NOT NULL   →  name                  VARCHAR(150) NOT NULL
+Description          NVARCHAR(MAX) NULL       →  description           TEXT         NULL
+ParentCategoryID     INT NULL, FK self         →  parent_category_id    INT NULL, FK -> part_categories(category_id)
+IsActive             BIT NOT NULL D 1         →  is_active             BOOLEAN NOT NULL DEFAULT TRUE
+CreatedAt            DATETIME2(3) NOT NULL    →  created_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+UpdatedAt            DATETIME2(3) NOT NULL    →  updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+
+----------------------------------------------------------------
+Table: dbo.Suppliers  →  public.suppliers
+----------------------------------------------------------------
+SupplierID           INT IDENTITY PK          →  supplier_id           INT GENERATED ALWAYS AS IDENTITY PK
+Name                 NVARCHAR(200) NOT NULL   →  name                  VARCHAR(200) NOT NULL
+ContactName          NVARCHAR(200) NULL       →  contact_name          VARCHAR(200) NULL
+Email                NVARCHAR(254) NULL       →  email                 VARCHAR(254) NULL
+Phone                NVARCHAR(50)  NULL       →  phone                 VARCHAR(50)  NULL
+Website              NVARCHAR(500) NULL       →  website               VARCHAR(500) NULL
+IsActive             BIT NOT NULL D 1         →  is_active             BOOLEAN NOT NULL DEFAULT TRUE
+CreatedAt            DATETIME2(3) NOT NULL    →  created_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+UpdatedAt            DATETIME2(3) NOT NULL    →  updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+
+----------------------------------------------------------------
+Table: dbo.InventoryItems  →  public.inventory_items
+----------------------------------------------------------------
+InventoryItemID      INT IDENTITY PK          →  inventory_item_id     INT GENERATED ALWAYS AS IDENTITY PK
+SKU                  NVARCHAR(100) NOT NULL U →  sku                   VARCHAR(100) NOT NULL UNIQUE
+Name                 NVARCHAR(250) NOT NULL   →  name                  VARCHAR(250) NOT NULL
+Description          NVARCHAR(MAX) NULL       →  description           TEXT NULL
+CategoryID           INT NULL, FK             →  category_id           INT NULL, FK -> part_categories(category_id)
+SupplierID           INT NULL, FK             →  supplier_id           INT NULL, FK -> suppliers(supplier_id)
+Manufacturer         NVARCHAR(200) NULL       →  manufacturer          VARCHAR(200) NULL
+Model                NVARCHAR(200) NULL       →  model                 VARCHAR(200) NULL
+Caliber              NVARCHAR(75)  NULL       →  caliber               VARCHAR(75) NULL
+Platform             NVARCHAR(100) NULL       →  platform              VARCHAR(100) NULL
+PartRole             NVARCHAR(100) NULL       →  part_role             VARCHAR(100) NULL
+BuildType            NVARCHAR(50)  NULL       →  build_type            VARCHAR(50) NULL
+UnitCost             DECIMAL(19,4) NULL       →  unit_cost             NUMERIC(19,4) NULL
+UnitPrice            DECIMAL(19,4) NULL       →  unit_price            NUMERIC(19,4) NULL
+QuantityOnHand       INT NOT NULL D 0         →  quantity_on_hand      INT NOT NULL DEFAULT 0
+QuantityReserved     INT NOT NULL D 0         →  quantity_reserved     INT NOT NULL DEFAULT 0
+ReorderPoint         INT NOT NULL D 0         →  reorder_point         INT NOT NULL DEFAULT 0
+IsActive             BIT NOT NULL D 1         →  is_active             BOOLEAN NOT NULL DEFAULT TRUE
+RequiresFFL          BIT NOT NULL D 0         →  requires_ffl          BOOLEAN NOT NULL DEFAULT FALSE
+IsSerialized         BIT NOT NULL D 0         →  is_serialized         BOOLEAN NOT NULL DEFAULT FALSE
+CreatedAt            DATETIME2(3) NOT NULL    →  created_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+UpdatedAt            DATETIME2(3) NOT NULL    →  updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+CK_InventoryItems_Quantities                  →  ck_inventory_items_quantities (same expression)
+
+----------------------------------------------------------------
+Table: dbo.StockMovements  →  public.stock_movements
+----------------------------------------------------------------
+StockMovementID      INT IDENTITY PK          →  stock_movement_id     INT GENERATED ALWAYS AS IDENTITY PK
+InventoryItemID      INT NOT NULL, FK         →  inventory_item_id     INT NOT NULL, FK -> inventory_items
+MovementType         NVARCHAR(50) NOT NULL    →  movement_type         VARCHAR(50) NOT NULL
+Quantity             INT NOT NULL             →  quantity              INT NOT NULL
+ReferenceType        NVARCHAR(50) NULL        →  reference_type        VARCHAR(50) NULL
+ReferenceID          INT NULL                 →  reference_id          INT NULL
+Notes                NVARCHAR(MAX) NULL       →  notes                 TEXT NULL
+CreatedAt            DATETIME2(3) NOT NULL    →  created_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+CreatedBy            NVARCHAR(150) NULL       →  created_by            VARCHAR(150) NULL
+CK_StockMovements_Quantity (Quantity <> 0)    →  ck_stock_movements_quantity (quantity <> 0)
+
+----------------------------------------------------------------
+Table: dbo.Orders  →  public.orders
+----------------------------------------------------------------
+OrderID              INT IDENTITY PK          →  order_id              INT GENERATED ALWAYS AS IDENTITY PK
+CustomerName         NVARCHAR(200) NULL       →  customer_name         VARCHAR(200) NULL
+CustomerEmail        NVARCHAR(254) NULL       →  customer_email        VARCHAR(254) NULL
+CustomerPhone        NVARCHAR(50)  NULL       →  customer_phone        VARCHAR(50) NULL
+OrderStatus          NVARCHAR(50) NOT NULL D 'draft'  →  order_status  VARCHAR(50) NOT NULL DEFAULT 'draft'
+BuildType            NVARCHAR(50) NULL        →  build_type            VARCHAR(50) NULL
+Notes                NVARCHAR(MAX) NULL       →  notes                 TEXT NULL
+CreatedAt            DATETIME2(3) NOT NULL    →  created_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+UpdatedAt            DATETIME2(3) NOT NULL    →  updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+
+----------------------------------------------------------------
+Table: dbo.OrderReservations  →  public.order_reservations
+----------------------------------------------------------------
+ReservationID        INT IDENTITY PK          →  reservation_id        INT GENERATED ALWAYS AS IDENTITY PK
+OrderID              INT NOT NULL, FK         →  order_id              INT NOT NULL, FK -> orders
+InventoryItemID      INT NOT NULL, FK         →  inventory_item_id     INT NOT NULL, FK -> inventory_items
+Quantity             INT NOT NULL             →  quantity              INT NOT NULL
+ReservationStatus    NVARCHAR(50) NOT NULL D 'active'  →  reservation_status VARCHAR(50) NOT NULL DEFAULT 'active'
+ExpiresAt            DATETIME2(3) NULL        →  expires_at            TIMESTAMPTZ NULL
+CreatedAt            DATETIME2(3) NOT NULL    →  created_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+UpdatedAt            DATETIME2(3) NOT NULL    →  updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+CK_OrderReservations_Quantity (Quantity > 0)  →  ck_order_reservations_quantity (quantity > 0)
+CK_OrderReservations_Status (IN 5 values)     →  ck_order_reservations_status (same IN list)
+
+----------------------------------------------------------------
+Indexes
+----------------------------------------------------------------
+IX_InventoryItems_ConfigSearch (PartRole, BuildType, IsActive) INCLUDE (...)
+    →  ix_inventory_items_config_search (part_role, build_type, is_active)
+       INCLUDE (sku, name, manufacturer, model, caliber, platform,
+                unit_price, quantity_on_hand, quantity_reserved)
+
+IX_OrderReservations_Active (ReservationStatus, ExpiresAt, OrderID, InventoryItemID) INCLUDE (Quantity)
+    →  ix_order_reservations_active (reservation_status, expires_at, order_id, inventory_item_id)
+       INCLUDE (quantity)
+
+----------------------------------------------------------------
+Triggers
+----------------------------------------------------------------
+dbo.trg_InventoryItems_NoOversell (AFTER INSERT,UPDATE; inserted pseudo-table)
+    →  public.trg_inventory_items_no_oversell() + trigger inventory_items_no_oversell
+       BEFORE INSERT OR UPDATE FOR EACH ROW (references NEW)
+
+dbo.trg_OrderReservations_StatusIntegrity (AFTER INSERT,UPDATE)
+    →  public.trg_order_reservations_status_integrity() + trigger
+       order_reservations_status_integrity BEFORE INSERT OR UPDATE FOR EACH ROW
+
+----------------------------------------------------------------
+Stored procedures → plpgsql functions
+----------------------------------------------------------------
+dbo.usp_CreateOrderReservation(@OrderID, @InventoryItemID, @Quantity, @ExpiresAt)
+    →  public.usp_create_order_reservation(p_order_id, p_inventory_item_id, p_quantity, p_expires_at)
+       RETURNS TABLE(...) -- call with SELECT * FROM ...
+
+dbo.usp_ReleaseReservation(@ReservationID)
+    →  public.usp_release_reservation(p_reservation_id) RETURNS TABLE(...)
+
+dbo.usp_ExpireReservations(@AsOf)
+    →  public.usp_expire_reservations(p_as_of) RETURNS TABLE(...)
+
+----------------------------------------------------------------
+Python-side column keys
+----------------------------------------------------------------
+The FastAPI backend (app/table_config.py, schemas.py, service modules) uses
+the SQL Server PascalCase column names (SKU, InventoryItemID, QuantityOnHand,
+etc.). When migrating to snake_case, update table_config.py AND all raw SQL
+fragments. A compatibility option is to keep the original PascalCase names
+in PostgreSQL by double-quoting them everywhere — tradeoff: harder-to-read
+SQL, but zero changes to Python column keys. This package chooses the
+snake_case convention because Python-side changes are localized to
+app/table_config.py and a handful of service SQL strings.
