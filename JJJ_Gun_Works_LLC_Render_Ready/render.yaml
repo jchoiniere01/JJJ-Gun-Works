@@ -23,4 +23,4 @@ databases:
   - name: jjj-gun-works-db
     databaseName: firearms_inventory
     user: firearms_app
-    plan: starter
+    plan: free
