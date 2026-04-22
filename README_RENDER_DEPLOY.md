@@ -79,7 +79,7 @@ The third script is optional seed data for the configurator.
 | `APP_NAME` | static | `Firearms Inventory API` |
 | `APP_ENV` | static | `production` on Render, `local` for dev |
 | `API_PREFIX` | static | `/api` |
-| `CORS_ORIGINS` | static | Comma-separated list of allowed origins |
+| `CORS_ORIGINS` | static | Allowed origins. Accepts comma-separated (`https://a.com,https://b.com`), a JSON list (`["https://a.com","https://b.com"]`), a single URL, or empty. **Do not wrap the value in quotes in the Render dashboard** — they are preserved as literal characters. See `CORS_SETTINGS_FIX.md`. |
 
 The real secrets (passwords, connection strings) live only in Render's
 encrypted environment variables. Do **not** commit `.env`. Use
@@ -149,6 +149,14 @@ curl -X POST "https://<service>.onrender.com/api/reservations/release" \
 - **Low connection limit on Free / small plans** — the app uses a small pool
   (`min_size=1`, `max_size=5`). Bump in `app/db.py` when you upgrade the
   Postgres plan.
+- **App crashes on boot with `pydantic_settings.sources.SettingsError: error parsing value for field "cors_origins"`** —
+  an older build tried to parse `CORS_ORIGINS` as a pydantic `list[str]`
+  before any validator ran, and pydantic-settings' default JSON-first
+  parser rejected the comma-separated form. This package now stores the
+  raw string and parses it after load (see `app/config.py` →
+  `cors_origins_raw` + the `cors_origins` computed property). If you still
+  see the error, confirm you're running the latest `app/config.py` and
+  that the env value is not wrapped in quotes. See `CORS_SETTINGS_FIX.md`.
 - **Build fails with `maturin failed` / `error: could not write to /usr/local/cargo/registry`** —
   Render picked a Python version (e.g. 3.14) that has no `pydantic-core`
   wheel, so pip tried to compile Rust from source. Confirm

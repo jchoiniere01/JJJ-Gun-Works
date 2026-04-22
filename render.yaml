@@ -18,6 +18,9 @@ services:
         value: production
       - key: API_PREFIX
         value: /api
+      # CORS_ORIGINS accepts: empty, single URL, comma-separated, or JSON list.
+      # Do not wrap the value in quotes — Render preserves them literally.
+      # See CORS_SETTINGS_FIX.md.
       - key: CORS_ORIGINS
         value: http://localhost:5173,http://localhost:3000
 

@@ -125,6 +125,16 @@ original SQL Server / pyodbc project. Original sources are preserved under
   database. Render's legacy Postgres plans (such as `starter`) are no longer
   valid for new databases — pick `free` for dev or a current paid tier
   (e.g. `basic-256mb`, `basic-1gb`, `pro-*`) for production.
+- **CORS_ORIGINS parsing fix.** pydantic-settings v2 JSON-decodes env vars
+  typed as `list[str]` before any validator runs, so a comma-separated
+  `CORS_ORIGINS` (the Render-friendly form) raised
+  `SettingsError: error parsing value for field "cors_origins"`. The
+  field is now stored as a raw string (`cors_origins_raw`) and the parsed
+  list is exposed via a `@computed_field` property on `Settings`. The
+  property accepts comma-separated, single URL, JSON list literal, and
+  empty/unset values. `app/main.py` already passes `settings.cors_origins`
+  to `CORSMiddleware`, so no call-site changes were needed. See
+  `CORS_SETTINGS_FIX.md`.
 - **Python runtime pinned to 3.12.8.** Render was otherwise defaulting to
   Python 3.14, for which `pydantic-core` ships no manylinux wheel. pip then
   tried to build `pydantic-core` from source with `maturin`/`cargo`, which
